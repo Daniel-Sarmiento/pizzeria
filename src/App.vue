@@ -1,31 +1,44 @@
 <template>
-  <div id="app">
-    <div id="nav">
-      <router-link to="/">Home</router-link> |
-      <router-link to="/about">About</router-link>
-    </div>
-    <router-view/>
-  </div>
+  <v-app>
+    <v-toolbar app>
+      <v-toolbar-title>
+        <router-link to="/">
+        <span  class="font-weight-light">UPizzas</span>
+        </router-link>
+      </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <v-btn
+        flat
+        to="pedidos"
+      >
+        <span class="mr-2">Historial</span>
+      </v-btn>
+      <v-btn
+        flat
+        to="orden"
+      >
+        <span class="mr-2">Carrito {{ $store.state.pizzasEnCarrito.length }}</span>
+      </v-btn>
+    </v-toolbar>
+
+    <v-content>
+      <router-view></router-view>
+    </v-content>
+  </v-app>
 </template>
 
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-}
-#nav {
-  padding: 30px;
-}
+<script>
 
-#nav a {
-  font-weight: bold;
-  color: #2c3e50;
+export default {
+  
+  name: 'App',
+  data () {
+    return {
+      //
+    }
+  },
+  created(){
+    this.$store.commit('incializarPizzasEnCarrito')
+  }
 }
-
-#nav a.router-link-exact-active {
-  color: #42b983;
-}
-</style>
+</script>
