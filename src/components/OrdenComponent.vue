@@ -1,12 +1,3 @@
-<!--
-<template>
-    <div>
-      <h1> Order component </h1>
-      <div ref="card"></div>
-      <button v-on:click="purchase">Pagar</button>
-    </div>
-</template>
--->
 <template>
 <v-container>
   <v-stepper v-model="e1">
@@ -28,7 +19,10 @@
             <v-card class="mb-4 p-5"
             color="grey lighten-4"
             height="200px" v-for="(order, index) in orders" v-bind:key="index">
-              <h2>{{order.title}}</h2>
+              <h2>{{order.title}} 
+                <v-btn icon @click="deleteOrder(order)">
+                   <v-icon color="red" >delete_forever</v-icon>
+                </v-btn> </h2>
                 <v-radio-group v-model="order.tamano" :mandatory="false" row>
                   <v-radio label="chica" value="chica"></v-radio>
                   <v-radio label="mediana" value="mediana"></v-radio>
@@ -50,32 +44,15 @@
                 </h4>
             </v-card>
             <h2>Total: ${{total}} </h2>
-            <!-- <p>Tamaño</p>
-            <v-radio-group v-model="tamano" :mandatory="false" row>
-              <v-radio label="chica" value="chica"></v-radio>
-              <v-radio label="mediana" value="mediana"></v-radio>
-              <v-radio label="grande" value="grande"></v-radio>
-            </v-radio-group>
-
-            <v-select
-              v-model="ingredienteExtra"
-              :items="items"
-              :error-messages="selectErrors"
-              label="Ingrediente extra"
-              required
-              @change="$v.select.$touch()"
-              @blur="$v.select.$touch()"
-            ></v-select> -->
-
 
           <v-btn
             color="primary"
             @click="e1 = 2"
           >
-            Continue
+            Continuar
           </v-btn>
 
-          <v-btn flat>Cancel</v-btn>
+          <v-btn flat to="/">Cancelar</v-btn>
         </v-stepper-content>
 
         <v-stepper-content step="2">
@@ -103,17 +80,14 @@
           <v-text-field 
           v-model="telefono" mask="phone" label="Telefono">
           </v-text-field>
-
-          
-
           <v-btn
             color="primary"
             @click="e1 = 3"
           >
-            Continue
+            Continuar
           </v-btn>
 
-          <v-btn flat>Cancel</v-btn>
+          <v-btn flat to="/">Cancelar</v-btn>
         </v-stepper-content>
 
         <v-stepper-content step="3">
@@ -136,20 +110,35 @@
             color="primary"
             @click="finish()"
           >
-            Finish
+            Comprar
           </v-btn>
           <!-- @click="e1 = 1" -->
-
-          <v-btn flat>Cancel</v-btn>
+          <v-btn flat to="/">Cancelar</v-btn>
         </v-stepper-content>
       </form>
     </v-stepper-items>
   </v-stepper>
-  <div>
-      <h1> Pago </h1>
-      <!-- <div ref="card"></div> -->
-      <button v-on:click="purchase">Pagar</button>
-    </div>
+    <v-dialog
+      v-model="dialog"
+      hide-overlay
+      persistent
+      width="300"
+      fixed
+    >
+      <v-card
+        color="primary"
+        dark
+      >
+        <v-card-text>
+          Procesando orden, espere por favor.
+          <v-progress-linear
+            indeterminate
+            color="white"
+            class="mb-0"
+          ></v-progress-linear>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 </v-container>
 </template>
 
@@ -178,6 +167,7 @@
 
   export default {
     data: () => ({
+      dialog: false,
       orders: [],
       e1: 0,
       name: '',
@@ -191,19 +181,35 @@
       ]
     }),//data
     mounted: function () {
+      stripe = Stripe(`pk_test_OYuXFtpppcRx1rTc7ifegyhh00hbhxY1oA`),
+      elements = stripe.elements(),
+      card = undefined;
       card = elements.create('card', style);
       card.mount(this.$refs.card);
     },//mounted
     created(){
-      this.incializarOrders()
+      this.incializarOrders();
     },
     methods: {
+      deleteOrder(order){
+        let idx = this.orders.indexOf(order);
+        if(idx != -1){
+            this.orders.splice(idx, 1)
+            this.$store.commit('updateCarrito', idx)
+        }
+      },
+      incializarStripe(){
+        this.stripe = Stripe(`pk_test_OYuXFtpppcRx1rTc7ifegyhh00hbhxY1oA`)
+        this.elements = this.stripe.elements()
+        this.card = undefined;
+      },
       incializarOrders(){
         if( localStorage.getItem('pizzas') ){
           let pizzas =  localStorage.getItem('pizzas')
           pizzas = JSON.parse(pizzas)
-          console.log(pizzas)
+          console.log("local",pizzas)
           this.orders = pizzas.map( pizza =>{
+            console.log("map", pizza)
             return { 
             _pizza: pizza._id,
             title: pizza.title,
@@ -218,13 +224,11 @@
             }
           })
         }
-        console.log(this.orders)
+        console.log("this orders",this.orders)
       },
       purchase: function () {
         stripe.createToken(card).then(function(result) {
           const path = 'http://localhost:3000/charge';
-      
-          console.log(result)
           
           axios.post(path, result).then( (response)=>{
             console.log(response)
@@ -238,6 +242,8 @@
         this.$v.$touch()
       },
       finish(){
+        this.dialog = true;
+        let tokenFirebase = localStorage.getItem('tokenFirebase');
         let navigator_info = window.navigator;
         let screen_info = window.screen;
         let uid = navigator_info.mimeTypes.length;
@@ -263,6 +269,7 @@
         
         let invoice = {
           user: uid,
+          tokenFirebase: tokenFirebase,
           name: this.name,
           email: this.email,
           phone: this.telefono,
@@ -272,12 +279,14 @@
           total: total
         }
         console.log("invoice", invoice)
-        stripe.createToken(card).then(function(stripeResult) {
-          const path = 'http://localhost:3000/api/invoices';
+        stripe.createToken(card).then((stripeResult) => {
+          const path = 'https://api-rest-pizzeria.herokuapp.com/api/invoices';
           invoice.stripe = stripeResult
-          
+
           axios.post(path, invoice).then( (response)=>{
-            console.log("redirigir a estadisticas")
+            this.dialog = false;
+            this.$router.push('pedidos')
+            this.$store.commit('vaciarCarrito')
           }).catch((err)=>{
             console.log(err)
           })

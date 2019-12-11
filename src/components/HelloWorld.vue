@@ -1,19 +1,20 @@
 <template>
   <v-container class="my-2">
     <v-layout row wrap>
-      <v-flex xs12 sm6 md4 lg3 v-for="pizza in pizzas" v-bind:key="pizza.id">
-        
-        <v-card class="ma-3">
+      <v-flex xs12 sm6 md4 lg3 v-for="pizza in pizzas" v-bind:key="pizza.id">    
+        <v-card class="ma-2">
           <v-img
-            src="http://dominos.com.mx/wp-content/uploads/2019/03/600X400_ORILLA179.png"
+            :src="pizza.image"
             height="200px"
           >
           </v-img>
  
           <v-card-title primary-title>
             <div>
-              <div class="headline"> {{ pizza.title }} <span class="green--text"> ${{ pizza.prices.mediana }} </span></div>
+              <div class="headline"> {{ pizza.title }}</div>
+              <div class="headline"><span class="green--text"> ${{ pizza.prices.mediana }} </span></div>
             </div>
+            
           </v-card-title>
           <v-card-actions>
             <v-btn flat color="blue" @click="$store.commit('agregarPizzaAlCarrito', pizza )">Añadir al carrito</v-btn>
@@ -39,10 +40,11 @@ import axios from 'axios';
     data: () => ({
       show: false,
       pizzas: null,
+      user: '',
     }),
     methods: {
       getPizzas(){
-        const path = 'http://localhost:3000/api/pizzas';
+        const path = 'https://api-rest-pizzeria.herokuapp.com/api/pizzas';
         axios.get(path).then( (response)=>{
           this.pizzas = response.data.pizzas.map(p=>{
             p.show = false
@@ -61,6 +63,15 @@ import axios from 'axios';
     },
     created(){
       this.getPizzas()
+      let navigator_info = window.navigator;
+      let screen_info = window.screen;
+      let uid = navigator_info.mimeTypes.length;
+      uid += navigator_info.userAgent.replace(/\D+/g, '');
+      uid += navigator_info.plugins.length;
+      uid += screen_info.height || '';
+      uid += screen_info.width || '';
+      uid += screen_info.pixelDepth || '';
+      this.user = uid
     }
   }
 </script>

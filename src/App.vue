@@ -1,9 +1,9 @@
 <template>
   <v-app>
-    <v-toolbar app>
+    <v-toolbar app dark color="primary">
       <v-toolbar-title>
         <router-link to="/">
-        <span  class="font-weight-light">UPizzas</span>
+        <span  class="font-weight-light white--text">UPizzas</span>
         </router-link>
       </v-toolbar-title>
       <v-spacer></v-spacer>
@@ -11,13 +11,14 @@
         flat
         to="pedidos"
       >
-        <span class="mr-2">Historial</span>
+        <span class="">Historial</span>
       </v-btn>
       <v-btn
         flat
         to="orden"
       >
-        <span class="mr-2">Carrito {{ $store.state.pizzasEnCarrito.length }}</span>
+      <v-icon>shopping_cart</v-icon>{{ $store.state.pizzasEnCarrito.length }}
+        <!-- <span class="mr-2">Carrito {{ $store.state.pizzasEnCarrito.length }}</span> -->
       </v-btn>
     </v-toolbar>
 

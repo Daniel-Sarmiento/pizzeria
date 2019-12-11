@@ -1,22 +1,24 @@
 <template>
   <v-container>
       <v-layout column>
-
           <!--pedido-->
           <v-flex xs12 sm12 md12 lg12 v-for="pedido in pedidos" v-bind:key="pedido._id">
             <h3> 
                 <span class="blue--text"> ORDEN ID: </span>{{pedido._id}} 
-                <span class="green--text"> {{pedido.status}}</span>
+                <span class="blue--text" v-if="pedido.status==0"> Recibida</span>
+                <span class="orange--text" v-if="pedido.status==1"> en Camino</span>
+                <span class="green--text" v-if="pedido.status==2"> Entregada</span>
             </h3>
             <h3> 
-                <span class="blue--text"> TOTAL: </span>${{pedido.total}}
+                <span class="blue--text"> TOTAL: </span>
+                <span class="green--text">${{pedido.total}}</span>
             </h3>
               <v-layout row wrap>
                 <!--ordenes-->
                 <v-flex xs12 sm6 md4 lg4 v-for="orden in pedido.orders" v-bind:key="orden._id">
                     <v-card class="ma-3">
                         <v-img
-                            src="http://dominos.com.mx/wp-content/uploads/2019/03/600X400_ORILLA179.png"
+                            :src="orden._pizza.image"
                             height="200px"
                         >
                         </v-img>
@@ -41,10 +43,8 @@
                         </v-card-title>
                     </v-card>
                 </v-flex>
-                
               </v-layout>
           </v-flex>
-          
       </v-layout>
   </v-container>
 </template>
@@ -65,7 +65,7 @@ import axios from 'axios';
         uid += screen_info.width || '';
         uid += screen_info.pixelDepth || '';
 
-        const path = 'http://localhost:3000/api/myinvoices';
+        const path = 'https://api-rest-pizzeria.herokuapp.com/api/myinvoices';
         axios.post(path, {user: uid}).then( (response)=>{
             this.pedidos = response.data
             console.log(this.pedidos)
